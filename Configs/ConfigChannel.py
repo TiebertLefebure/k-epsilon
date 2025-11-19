@@ -56,7 +56,7 @@ boundary_conditions = {
 
 # Physical quantities
 physical_prm = {
-    'VISCOSITY': 0.00181818,
+    'VISCOSITY': 0.00181818, # kinematic viscosity [m^2/s]
     'FORCE': (0.0, 0.0),
     'STEP_SIZE': 0.005
 }

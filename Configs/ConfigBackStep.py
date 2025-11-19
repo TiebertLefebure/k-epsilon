@@ -56,16 +56,16 @@ boundary_conditions = {
 
 # Physical quantities
 physical_prm = {
-    'VISCOSITY': 0.000181818,
+    'VISCOSITY': 0.000181818, # kinematic viscosity [m^2/s]
     'FORCE': (0.0, 0.0)
 }
 
 # Simulation parameters
 simulation_prm = {
     'QUADRATURE_DEGREE': 2,
-    'MAX_ITERATIONS': 3000,
-    'TOLERANCE': 1e-6,
-    'PICARD_RELAXATION': 0.1
+    'MAX_ITERATIONS': 1000, # initially: 3000
+    'TOLERANCE': 1e-3, # initially: 1e-6
+    'PICARD_RELAXATION': 0.1 # initially: 0.1
 }
 
 # Specify where results are saved for k-epsilon runs
