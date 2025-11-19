@@ -7,10 +7,14 @@ import os
 # ------------- Utilities for checking convergence  ------------- #
 
 def _compute_l2_error(f1, f0):
-    '''Compute l2 error of two functions: f1, f0''' 
+    '''Compute rms L2 error of two functions: f1, f0''' 
     error = f1 - f0
-    error = np.sqrt(assemble(error**2*dx) + DOLFIN_EPS)
-    return error
+    mesh = f1.function_space().mesh()
+    dx_local = Measure("dx", domain=mesh)
+    domain_measure = assemble(Constant(1.0) * dx_local)
+    error_val = assemble(error**2 * dx_local)
+    rms_error = np.sqrt((error_val / (domain_measure + DOLFIN_EPS)) + DOLFIN_EPS)
+    return rms_error
 
 def _are_close(f1, f0, tol):
     '''Check if two functions: f1, f0 are sufficiently (tol) close'''
