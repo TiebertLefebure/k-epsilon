@@ -82,6 +82,9 @@ saving_directory_SA = {
     'RESIDUALS': 'Results/BackStep_SA/Residual files/'
 }
 
+# Summary result file for SA runs
+results_file_SA = 'Results/BackStep_SA/results.txt'
+
 # Specify what to do after simulation
 post_processing = {
     'PLOT': True,

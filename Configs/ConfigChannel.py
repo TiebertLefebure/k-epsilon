@@ -84,6 +84,9 @@ saving_directory_SA = {
     'FIGURES':   'Results/Channel_SA/Figures/'
 }
 
+# Summary result file for SA runs
+results_file_SA = 'Results/Channel_SA/results.txt'
+
 # Specify what to do after simulation
 post_processing = {
     'PLOT': True,

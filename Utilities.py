@@ -9,7 +9,7 @@ import os
 def _compute_l2_error(f1, f0):
     '''Compute l2 error of two functions: f1, f0''' 
     error = f1 - f0
-    error = assemble(error**2*dx)
+    error = np.sqrt(assemble(error**2*dx) + DOLFIN_EPS)
     return error
 
 def _are_close(f1, f0, tol):

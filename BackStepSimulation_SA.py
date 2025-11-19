@@ -65,6 +65,7 @@ a_w = lhs(FW); l_w = rhs(FW)
 # Main loop
 residuals = {key: [] for key in ['u', 'p', 'nu_tilde']}
 start_time = time.time()
+converged = False
 for iter in range(simulation_prm['MAX_ITERATIONS']):
     # Solve NS
     A_W = assemble(a_w); b_w = assemble(l_w)
@@ -77,6 +78,7 @@ for iter in range(simulation_prm['MAX_ITERATIONS']):
     break_flag, errors = are_close_all([u1, p1, turbulence_model.nu_tilde1], 
                                        [u0, p0, turbulence_model.nu_tilde0], 
                                        simulation_prm['TOLERANCE'])
+    converged = break_flag
         
     # Update residuals and print summary
     print(f'iter: {iter+1} ({time.time() - start_time:.2f}s) - L2 errors: '
@@ -94,6 +96,7 @@ for iter in range(simulation_prm['MAX_ITERATIONS']):
     if break_flag:
         print(f'Simulation converged in {iter+1} iterations ({time.time() - start_time:.2f} seconds)')
         break
+total_time = time.time() - start_time
 
 # Store solutions in one dictionary
 u1,p1 = w1.split(deepcopy=True)
@@ -115,3 +118,16 @@ if post_processing['SAVE']==True:
 
     for (key, f) in residuals.items():
         save_list(f, saving_directory_SA['RESIDUALS'] + key + '.txt')
+
+# Write summary results file
+os.makedirs(os.path.dirname(results_file_SA), exist_ok=True)
+iterations_completed = len(residuals['u'])
+final_errors = {key: (values[-1] if values else float('nan')) for key, values in residuals.items()}
+with open(results_file_SA, 'w') as f:
+    f.write('case backstep_SA\n')
+    f.write(f'iterations {iterations_completed}\n')
+    f.write(f'converged {converged}\n')
+    f.write(f'elapsed_time {total_time:.6f}\n')
+    f.write(f'final_error_u {final_errors["u"]:.16e}\n')
+    f.write(f'final_error_p {final_errors["p"]:.16e}\n')
+    f.write(f'final_error_nu_tilde {final_errors["nu_tilde"]:.16e}\n')
