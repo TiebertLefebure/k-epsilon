@@ -18,7 +18,8 @@ initial_conditions = {
     'U': (0.0, 0.0),
     'P': 0.0,
     'K': 1.73,
-    'E': 1.46
+    'E': 1.46,
+    'NU_TILDE': 1e-6
 }
 
 # Boundary conditions
@@ -27,25 +28,29 @@ boundary_conditions = {
         'U': (25.0, 0.0),
         'P': None,
         'K': 1.73,
-        'E': 1.46
+        'E': 1.46,
+        'NU_TILDE': None
     },
     'OUTFLOW':{
         'U': None,
         'P': 0.0,
         'K': None,
-        'E': None
+        'E': None,
+        'NU_TILDE': None
     },
     'WALLS':{
         'U': (0.0, 0.0),
         'P': None,
         'K': 0.0,
-        'E': None
+        'E': None,
+        'NU_TILDE': 0.0
     },
     'SYMMETRY':{
         'U': 0.0,
         'P': None,
         'K': 1.73,
-        'E': 1.46
+        'E': 1.46,
+        'NU_TILDE': None
     }
 }
 
@@ -68,6 +73,13 @@ saving_directory = {
     'PVD_FILES': 'Results/BackStep/PVD files/',
     'H5_FILES':  'Results/BackStep/H5 files/',
     'RESIDUALS': 'Results/BackStep/Residual files/'
+}
+
+# Dedicated saving directories for SA runs
+saving_directory_SA = {
+    'PVD_FILES': 'Results/BackStep_SA/PVD files/',
+    'H5_FILES':  'Results/BackStep_SA/H5 files/',
+    'RESIDUALS': 'Results/BackStep_SA/Residual files/'
 }
 
 # Specify what to do after simulation
