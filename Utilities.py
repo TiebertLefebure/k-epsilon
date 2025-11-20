@@ -7,12 +7,25 @@ import os
 # ------------- Utilities for checking convergence  ------------- #
 
 def compute_l2_error(f1, f0):
-    '''Compute rms L2 error of two functions: f1, f0''' 
+    '''Compute rms L2 error of two functions/expressions: f1, f0''' 
     error = f1 - f0
-    mesh = f1.function_space().mesh()
+    mesh = None
+    for f in (f1, f0, error):
+        if hasattr(f, "function_space"):
+            mesh = f.function_space().mesh()
+            break
+        domain = getattr(f, "ufl_domain", lambda: None)()
+        if domain is not None:
+            mesh = getattr(domain, "ufl_cargo", lambda: None)()
+            if mesh is not None:
+                break
+    if mesh is None:
+        raise ValueError("Cannot determine mesh for L2 error calculation.")
+
     dx_local = Measure("dx", domain=mesh)
     domain_measure = assemble(Constant(1.0) * dx_local)
-    error_val = assemble(error**2 * dx_local)
+    error_sq = inner(error, error)
+    error_val = assemble(error_sq * dx_local)
     rms_error = np.sqrt((error_val / (domain_measure + DOLFIN_EPS)) + DOLFIN_EPS)
     return rms_error
 
