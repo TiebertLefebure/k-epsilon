@@ -92,6 +92,10 @@ for iter in range(simulation_prm['MAX_ITERATIONS']):
         h_x = MaxCellEdgeLength(mesh); h_y = MinCellEdgeLength(mesh)
         step_size = calculate_cfl_time_step(u0, h_x, h_y, simulation_prm['CFL_RELAXATION'], mesh)
         dt.assign(Constant(step_size))
+        u_x = u0[0]
+        u_y = u0[1]
+        cfl = step_size * (abs(u_x) / h_x + abs(u_y) / h_y)
+        print(f"CFL number: {cfl:.2f}")
 
     # Solve NS
     A_1 = assemble(a_1); b_1 = assemble(l_1)
@@ -108,7 +112,12 @@ for iter in range(simulation_prm['MAX_ITERATIONS']):
 
     # Solve turbulence model
     turbulence_model.solve_turbulence_model()
-    # solve transport equation for nu_tilde (turbulent kinematic eddy viscosity)
+    
+    # Apply relaxation for better convergence
+    relaxation = 0.7  # Can be adjusted between 0.5-0.9
+    u1.vector()[:] = relaxation * u1.vector() + (1 - relaxation) * u0.vector()
+    p1.vector()[:] = relaxation * p1.vector() + (1 - relaxation) * p0.vector()
+    turbulence_model.update_variables(relaxation)
    
     errors = [
         compute_l2_error(u1, u0),
@@ -169,139 +178,15 @@ print(f'Mass flow check: inflow={flux_in:.6e}, outflow={flux_out:.6e}, net={net_
 if post_processing['PLOT']==True:
     visualize_functions(solutions)
     visualize_convergence(residuals)
-    xmin = mesh.coordinates()[:, 0].min(); xmax = mesh.coordinates()[:, 0].max()
-    ymin = mesh.coordinates()[:, 1].min(); ymax = mesh.coordinates()[:, 1].max()
-
-    # Wall-normal profiles (along y-direction) at x = x_mid
-    x_mid = 0.5 * (xmin + xmax) # probe where u(y)-profile is plotted (streamwise location x)
-    ys = np.linspace(ymin, ymax, 200) # amount of samples in y-direction
-    ux = []
-    nt = []
-    valid_y = []
-    for yv in ys:
-        try:
-            uval = u1(Point(x_mid, yv))
-            ux.append(uval[0])
-            nt.append(turbulence_model.nu_tilde1(Point(x_mid, yv)))
-            valid_y.append(yv)
-        except:
-            pass
-    fig1 = plt.figure()
-    plt.plot(ux, valid_y)
-    plt.gca().invert_yaxis()
-    plt.xlabel('u_x')
-    plt.ylabel('y')
-    plt.title('Wall-normal velocity profile u(y) at x = x_mid')
-    fig2 = plt.figure()
-    plt.plot(nt, valid_y)
-    plt.gca().invert_yaxis()
-    plt.xlabel('nu_tilde')
-    plt.ylabel('y')
-    plt.title('Wall-normal turbulent viscosity profile nu_tilde(y) at x = x_mid')
-    os.makedirs(saving_directory_SA['FIGURES'], exist_ok=True)
-    fig1.savefig(os.path.join(saving_directory_SA['FIGURES'], 'wallnormal_u(y)_xmid.png'), dpi=200, bbox_inches='tight')
-    fig2.savefig(os.path.join(saving_directory_SA['FIGURES'], 'wallnormal_nu_tilde(y)_xmid.png'), dpi=200, bbox_inches='tight')
-
-    # Centerline streamwise profiles (along x-direction) at y = y_mid
-    y_mid = 0.5 * (ymin + ymax)
-    xs = np.linspace(xmin, xmax, 200) # amount of samples in x-direction
-    ux_center = []
-    nt_center = []
-    valid_x = []
-    for xv in xs:
-        try:
-            uval = u1(Point(xv, y_mid))
-            ux_center.append(uval[0])
-            nt_center.append(turbulence_model.nu_tilde1(Point(xv, y_mid)))
-            valid_x.append(xv)
-        except:
-            pass
-    fig3 = plt.figure()
-    plt.plot(valid_x, ux_center)
-    plt.xlabel('x')
-    plt.ylabel('u(x)')
-    plt.title('Centerline streamwise velocity u(x) at y = y_mid')
-    # turn off scientific notation and offsets on the y-axis
-    # ax = plt.gca()
-    # ax.yaxis.get_major_formatter().set_useOffset(False)
-    # ax.yaxis.get_major_formatter().set_scientific(False)
-    fig4 = plt.figure()
-    plt.plot(valid_x, nt_center)
-    plt.xlabel('x')
-    plt.ylabel('nu_tilde(x)')
-    plt.title('Centerline streamwise turbulent viscosity nu_tilde(x) at y = y_mid')
-    # turn off scientific notation and offsets on the y-axis
-    # ax = plt.gca()
-    # ax.yaxis.get_major_formatter().set_useOffset(False)
-    # ax.yaxis.get_major_formatter().set_scientific(False)
-    fig3.savefig(os.path.join(saving_directory_SA['FIGURES'], 'centerline_u(x)_ymid.png'), dpi=200, bbox_inches='tight')
-    fig4.savefig(os.path.join(saving_directory_SA['FIGURES'], 'centerline_nu_tilde(x)_ymid.png'), dpi=200, bbox_inches='tight')
-    plt.show()
+    
 
 # Save results and residuals
 if post_processing['SAVE']==True:
-    for key in ['FIGURES', 'PVD_FILES', 'H5_FILES', 'RESIDUALS']:
-        os.makedirs(saving_directory_SA[key], exist_ok=True)
-    fig = plt.figure(figsize=(12, 4))
-    plt.subplot(1,3,1)
-    c = plot(sqrt(dot(u1, u1)))
-    plt.colorbar(c)
-    plt.title('u magnitude')
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.subplot(1,3,2)
-    c = plot(p1)
-    plt.colorbar(c)
-    plt.title('p')
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.subplot(1,3,3)
-    c = plot(turbulence_model.nu_tilde1)
-    plt.colorbar(c)
-    plt.title('nu_tilde')
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    fig.savefig(os.path.join(saving_directory_SA['FIGURES'], 'fields.png'), dpi=200, bbox_inches='tight')
-    plt.close(fig)
-    fig = plt.figure()
-    keys = list(residuals.keys())
-    for k in range(len(keys)):
-        plt.plot(range(1, len(residuals[keys[k]])+1), residuals[keys[k]], label=keys[k])
-    plt.yscale('log')
-    plt.xlabel('iterations')
-    plt.ylabel('error (log scale)')
-    plt.legend()
-    fig.savefig(os.path.join(saving_directory_SA['FIGURES'], 'convergence.png'), dpi=200, bbox_inches='tight')
-    plt.close(fig)
     for (key, f) in solutions.items():
         save_pvd_file(f, saving_directory_SA['PVD_FILES'] + key + '.pvd')
         save_h5_file( f, saving_directory_SA['H5_FILES']  + key + '.h5')
 
     for (key, f) in residuals.items():
         save_list(f, saving_directory_SA['RESIDUALS'] + key + '.txt')
-    with open(os.path.join(saving_directory_SA['RESIDUALS'], 'mass_flow.txt'), 'w') as f:
-        f.write(f'inflow_flux {flux_in:.16e}\n')
-        f.write(f'outflow_flux {flux_out:.16e}\n')
-        f.write(f'net_flux {net_flux:.16e}\n')
-        f.write(f'rel_imbalance {rel_imb:.16e}\n')
-        f.write(f'area_in {area_in:.16e}\n')
-        f.write(f'area_out {area_out:.16e}\n')
+   
 
-# Write summary results file
-os.makedirs(os.path.dirname(results_file_SA), exist_ok=True)
-iterations_completed = len(residuals['u'])
-final_errors = {key: (values[-1] if values else float('nan')) for key, values in residuals.items()}
-with open(results_file_SA, 'w') as f:
-    f.write('case channel_SA\n')
-    f.write(f'iterations {iterations_completed}\n')
-    f.write(f'converged {converged}\n')
-    f.write(f'elapsed_time {total_time:.6f}\n')
-    f.write(f'final_error_u {final_errors["u"]:.16e}\n')
-    f.write(f'final_error_p {final_errors["p"]:.16e}\n')
-    f.write(f'final_error_nu_tilde {final_errors["nu_tilde"]:.16e}\n')
-    f.write(f'inflow_flux {flux_in:.16e}\n')
-    f.write(f'outflow_flux {flux_out:.16e}\n')
-    f.write(f'net_flux {net_flux:.16e}\n')
-    f.write(f'rel_imbalance {rel_imb:.16e}\n')
-    f.write(f'area_in {area_in:.16e}\n')
-    f.write(f'area_out {area_out:.16e}\n')

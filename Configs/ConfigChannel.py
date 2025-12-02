@@ -19,7 +19,7 @@ initial_conditions = {
     'P': 2.0,
     'K': 1.5,
     'E': 2.23,
-    'NU_TILDE': 1e-6
+    'NU_TILDE': 0.01
 }
 
 # Boundary conditions
@@ -64,29 +64,25 @@ physical_prm = {
 # Simulation parameters
 simulation_prm = {
     'QUADRATURE_DEGREE': 2,
-    'MAX_ITERATIONS': 15000, # initially: 3000
+    'MAX_ITERATIONS': 15000, # initially: 3000 
     'TOLERANCE': 1e-6,
-    'VELOCITY_TOLERANCE': 1e-3, # initially 1e-6, relaxed for SA
+    'VELOCITY_TOLERANCE': 1e-6, # initially 1e-6, relaxed for SA
     'CFL_RELAXATION': 0.10 # initially: 0.25
 }
 
 # Specify where results are saved for k-epsilon runs
 saving_directory = {
-    'PVD_FILES': 'Results/Channel_k-epsilon/PVD files/',
-    'H5_FILES':  'Results/Channel_k-epsilon/H5 files/',
-    'RESIDUALS': 'Results/Channel_k-epsilon/Residual files/'
+    'PVD_FILES': 'Results/Channel_k-epsilon/PVD_files/',
+    'H5_FILES':  'Results/Channel_k-epsilon/H5_files/',
+    'RESIDUALS': 'Results/Channel_k-epsilon/Residual_files/'
 }
 
 # Dedicated saving directories for SA runs
 saving_directory_SA = {
-    'PVD_FILES': 'Results/Channel_SA/PVD files/',
-    'H5_FILES':  'Results/Channel_SA/H5 files/',
-    'RESIDUALS': 'Results/Channel_SA/Residual files/',
-    'FIGURES':   'Results/Channel_SA/Figures/'
+    'PVD_FILES': 'Results/Channel_SA/PVD_files/',
+    'H5_FILES':  'Results/Channel_SA/H5_files/',
+    'RESIDUALS': 'Results/Channel_SA/Residual_files/',
 }
-
-# Summary result file for SA runs
-results_file_SA = 'Results/Channel_SA/results.txt'
 
 # Specify what to do after simulation
 post_processing = {

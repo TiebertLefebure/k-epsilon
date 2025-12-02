@@ -63,7 +63,7 @@ physical_prm = {
 # Simulation parameters
 simulation_prm = {
     'QUADRATURE_DEGREE': 2,
-    'MAX_ITERATIONS': 1000, # initially: 3000
+    'MAX_ITERATIONS': 3000, # initially: 3000
     'TOLERANCE': 1e-3, # initially: 1e-6
     'PICARD_RELAXATION': 0.1 # initially: 0.1
 }
