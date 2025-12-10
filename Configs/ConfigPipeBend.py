@@ -1,8 +1,8 @@
 
 # File paths for mesh and boundary data
 mesh_files = {
-    'MESH_DIRECTORY': 'gmsh_meshes/mesh.xdmf',
-    'FACET_DIRECTORY': 'gmsh_meshes/facet.xdmf'
+    'MESH_DIRECTORY': 'Meshes/PipeBend/mesh.xdmf',
+    'FACET_DIRECTORY': 'Meshes/PipeBend/facet.xdmf'
 }
 
 # Specify type of boundaries
@@ -13,23 +13,39 @@ boundary_markers = {
     'SYMMETRY': None
 }
 
+# 2D U-bend (Ansys Manual VMFL048)
+# radius = 14 mm
+# radius of curvature = 125 mm
+# straight section lenghts = 10*D = 280 mm
+
+
+# inlet bulk velocity U = 4.0 m/s
+
+# choose turbulence intensity I = 5%
+
+# set turbulent length scale l ≈ 0.07*D = 2.0 mm
+
+# initial & inflow boundary conditions for K & E:
+# K = 1.5 * (U * I)^2 = 0.06  [m^2/s^2]
+# E = Cµ^(3/4) * K^(3/2) / l ≈ 1.2  [m^2/s^3], using Cµ = 0.09
+
 
 
 # Initial conditions
 initial_conditions = {
-    'U': (20.0, 0.0),
+    'U': (0.5, 0.0), #(20.0, 0.0)
     'P': 2.0,
-    'K': 1.5,
-    'E': 2.23
+    'K': 0.06,  #1.5
+    'E': 1.2    #2.23
 }
 
 # Boundary conditions
 boundary_conditions = {
     'INFLOW':{
-        'U': None,
-        'P': 2.0,
-        'K': None,
-        'E': None
+        'U': (4.0, 0.0), #0.0
+        'P': None, #2.0
+        'K': 0.06, #None
+        'E': 1.2   #None
     },
     'OUTFLOW':{
         'U': None,
@@ -53,17 +69,20 @@ boundary_conditions = {
 
 # Physical quantities
 physical_prm = {
-    'VISCOSITY': 0.00181818,
+    'VISCOSITY': 1.5e-5,  # air at room temperature   #0.00181818
     'FORCE': (0.0, 0.0),
-    'STEP_SIZE': 0.005
+    'STEP_SIZE': 5e-4 #0.005
 }
+
+# Reynolds number:
+# Re = U * D / ν = 4 * 0.028 / 1.5e-5 ≈ 7.5 × 10^3
 
 # Simulation parameters
 simulation_prm = {
     'QUADRATURE_DEGREE': 2,
     'MAX_ITERATIONS': 3000,
-    'TOLERANCE': 1e-6,
-    'CFL_RELAXATION': 0.25
+    'TOLERANCE': 1e-5,
+    'CFL_RELAXATION': 0.1 #0.25
 }
 
 # Specify where results are saved
@@ -78,3 +97,16 @@ post_processing = {
     'PLOT': True,
     'SAVE': True,
 }
+
+
+#docker run -it --rm \
+#    -v /Users/tiebertlefebure/Documents/FEniCSx/Turbulence_models:/home/fenics/shared \
+#    --platform linux/amd64 \
+#    quay.io/fenicsproject/stable:current
+
+
+#cd ~/shared
+
+#ls 
+
+#python3 PipeBendSimulation.py

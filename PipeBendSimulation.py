@@ -84,7 +84,7 @@ for iter in range(simulation_prm['MAX_ITERATIONS']):
     # Solve NS
     A_1 = assemble(a_1); b_1 = assemble(l_1)
     [bc.apply(A_1,b_1) for bc in bcu]
-    solve(A_1, u1.vector(), b_1, 'mumps')
+    solve(A_1, u1.vector(), b_1, 'mumps') # 'mumps' = direct solver ---- 'gmres' = iterative solver
 
     A_2 = assemble(a_2); b_2 = assemble(l_2)
     [bc.apply(A_2,b_2) for bc in bcp]
