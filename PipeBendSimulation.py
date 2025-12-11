@@ -12,20 +12,10 @@ quadrature_degree = simulation_prm['QUADRATURE_DEGREE']
 dx = Measure("dx", domain=mesh, metadata={"quadrature_degree": quadrature_degree})
 ds = Measure("ds", domain=mesh, metadata={"quadrature_degree": quadrature_degree})
 
-# Construct periodic boundary condition
-mesh_width  = mesh.coordinates()[:, 0].max() - mesh.coordinates()[:, 0].min()
-class Periodic(SubDomain):
-    def inside(self, x, on_boundary):
-        return on_boundary and near(x[0], 0)
-    def map(self, x, y):
-        y[0] = x[0] - mesh_width
-        y[1] = x[1]
-periodic = Periodic(1E-5)
-
 # Construct function spaces
-V = VectorFunctionSpace(mesh, "CG", 2, constrained_domain = periodic)       
+V = VectorFunctionSpace(mesh, "CG", 2)       
 Q = FunctionSpace(mesh, "CG", 1)                                        
-K = FunctionSpace(mesh, "CG", 1, constrained_domain = periodic)  
+K = FunctionSpace(mesh, "CG", 1)  
 
 # Construct boundary conditions
 bcu=[]; bcp=[]; bck=[]; bce=[]
@@ -45,8 +35,7 @@ for boundary_name, markers in boundary_markers.items():
 nu = Constant(physical_prm['VISCOSITY'])
 force = Constant(physical_prm['FORCE'])
 dt = Constant(physical_prm['STEP_SIZE'])
-height = mesh.coordinates()[:, 1].max() - mesh.coordinates()[:, 1].min()
-y = Expression('H/2 - abs(H/2 - x[1])', H=height, degree=2)
+y = calculate_Distance_field(K, marked_facets, boundary_markers['WALLS'], 0.01)
 
 # Initialize functions
 u, v, u1, u0 = initialize_functions(V, Constant(initial_conditions['U']))
@@ -84,7 +73,7 @@ for iter in range(simulation_prm['MAX_ITERATIONS']):
     # Solve NS
     A_1 = assemble(a_1); b_1 = assemble(l_1)
     [bc.apply(A_1,b_1) for bc in bcu]
-    solve(A_1, u1.vector(), b_1, 'mumps') # 'mumps' = direct solver ---- 'gmres' = iterative solver
+    solve(A_1, u1.vector(), b_1, 'mumps')
 
     A_2 = assemble(a_2); b_2 = assemble(l_2)
     [bc.apply(A_2,b_2) for bc in bcp]
@@ -134,3 +123,22 @@ if post_processing['SAVE']==True:
 
     for (key, f) in residuals.items():
         save_list(f, saving_directory['RESIDUALS'] + key + '.txt')
+
+
+
+# PipeBendSimulation.py
+
+# INPUT
+
+# cd /Users/tiebertlefebure/Documents/FEniCS-Tiebert/Turbulence_models/
+
+# docker run -ti --rm \
+#   -v "$(pwd)":/home/fenics/shared \
+#   -w /home/fenics/shared \
+#   quay.io/fenicsproject/stable:current
+
+# python3 PipeBendSimulation.py
+
+
+
+# OUTPUT

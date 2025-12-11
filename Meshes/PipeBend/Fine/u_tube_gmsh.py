@@ -22,6 +22,30 @@ H_leg = 10.0 * D        # straight-leg length (change if you like)
 
 lc = D / 20.0           # nominal mesh size
 
+### WALL-UNIT SCALES ###
+
+# Reynolds number: Re= 4.5 x 10^4
+# Blasius for smooth pipe (turbulent): C_f = 0.3164 * Re^(-1/4) = 0.0218
+# Friction velocity: u_τ = U * sqrt(C_f/2) = 0.148 m/s
+
+# Wall units: y+ = u_τ * y / ν => y = y+ * ν / u_τ
+# First cell center at y+ = 2-3
+# Definitely y+ < 5
+
+# y+ = 1 => y ≈ 0.006 mm
+# y+ = 3 => y ≈ 0.018 mm 
+# y+ = 5 => y ≈ 0.03 mm 
+
+# First cell center at y = 0.02 mm => y+ ≈ 3.3
+# First cell center at y = 0.03 mm => y+ ≈ 5
+
+
+# For low-Re Lam–Bremhorst integrated to the wall, aiming for y+ < 3 is nice
+# y+ < 5 is still acceptable if DOFs explode
+# h_wall ≈ 0.02 mm is a good target
+
+
+
 # Center of curvature at origin
 cx, cy = 0.0, 0.0
 
@@ -63,7 +87,7 @@ L_out_right = gmsh.model.geo.addLine(p_out_R_bot, p_out_R_top)
 L_in_right  = gmsh.model.geo.addLine(p_in_R_top, p_in_R_bot)
 L_in_left   = gmsh.model.geo.addLine(p_in_L_bot, p_in_L_top)
 
-# Inlet and outlet cuts (for 3D extrusion later)
+# Inlet and outlet cuts (for 3D extrusion later if you want)
 L_inlet  = gmsh.model.geo.addLine(p_in_L_top,  p_out_L_top)   # left cross-section
 L_outlet = gmsh.model.geo.addLine(p_out_R_top, p_in_R_top)    # right cross-section
 
@@ -104,9 +128,47 @@ gmsh.model.addPhysicalGroup(1, [L_inlet],  name="Inlet")
 gmsh.model.addPhysicalGroup(1, [L_outlet], name="Outlet")
 gmsh.model.addPhysicalGroup(
     1,
-    [L_out_left, L_out_right, L_in_left, L_in_right, A_out_1, A_out_2, A_in_1, A_in_2],
+    [L_out_left, L_out_right, L_in_left, L_in_right,
+     A_out_1, A_out_2, A_in_1, A_in_2],
     name="Walls"
 )
+
+# -----------------------------
+# Mesh size control for low-Re k-epsilon (integrated to the wall)
+# -----------------------------
+
+# Global mesh size bounds (in meters)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.005 * mm)   # 0.005 mm
+gmsh.option.setNumber("Mesh.MeshSizeMax", 5.0   * mm)   # 5 mm (core)
+
+# Curves that form the walls (same as "Walls" physical group)
+wall_curves = [
+    L_out_left, L_out_right, L_in_left, L_in_right,
+    A_out_1, A_out_2, A_in_1, A_in_2
+]
+
+# Distance field to walls
+dist = gmsh.model.mesh.field.add("Distance")
+gmsh.model.mesh.field.setNumbers(dist, "EdgesList", wall_curves)
+gmsh.model.mesh.field.setNumber(dist, "Sampling", 150) # ()"Sampling", 400)
+
+# Threshold field: distance -> element size
+# h_wall ~ 0.02 mm => y+ ~ 3.3 for your case (U=1.42, nu=8.9e-7, D=0.028)
+h_wall = 0.08 * mm  # 0.02 * mm    # fine resolution near the wall
+h_bulk = 2.0  * mm      # coarser elements in the core
+
+# Refined strip thickness
+d_min = 0.5 * mm  # 1.0 mm     # up to 1 mm from wall ~ h_wall
+d_max = 3.0 * mm  # 5.0 mm     # by 5 mm from wall ~ h_bulk
+
+th = gmsh.model.mesh.field.add("Threshold")
+gmsh.model.mesh.field.setNumber(th, "InField",  dist)
+gmsh.model.mesh.field.setNumber(th, "SizeMin",  h_wall)
+gmsh.model.mesh.field.setNumber(th, "SizeMax",  h_bulk)
+gmsh.model.mesh.field.setNumber(th, "DistMin",  d_min)
+gmsh.model.mesh.field.setNumber(th, "DistMax",  d_max)
+
+gmsh.model.mesh.field.setAsBackgroundMesh(th)
 
 # -----------------------------
 # Mesh + export
