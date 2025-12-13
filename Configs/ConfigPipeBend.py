@@ -32,21 +32,21 @@ boundary_markers = {
 
 # Initial conditions
 initial_conditions = {
-    'U': (0.5, 0.0, 0.0), 
-    'P': 2.0,
+    'U': (0.0, 0.0, 0.0), 
+    'P': 0.0,
     'K': 0.008,    
     'E': 0.054,    
-    'NU_TILDE': 0.0
+    'NU_TILDE': 2.67e-6 # 3*ν = 2.67e-6 [m^2/s]
 }
 
 # Boundary conditions
 boundary_conditions = {
     'INFLOW':{
-        'U': (1.42, 0.0, 0.0), #0.0
-        'P': None,  #2.0
-        'K': 0.008, #None
-        'E': 0.054,  #None
-        'NU_TILDE': 2.67e-6 # 3*ν = 2.67e-6
+        'U': (0.0, -1.42, 0.0), 
+        'P': None, 
+        'K': 0.008,
+        'E': 0.054,
+        'NU_TILDE': 2.67e-6 # 3*ν = 2.67e-6 [m^2/s]
     },
     'OUTFLOW':{
         'U': None,
@@ -80,6 +80,16 @@ simulation_prm = {
     'MAX_ITERATIONS': 3000,
     'TOLERANCE': 1e-6, #1e-6
     'CFL_RELAXATION': 0.1 #0.25
+}
+
+# Simulation parameters for SA model
+simulation_prm_SA = {
+    'QUADRATURE_DEGREE': 2,
+    'MAX_ITERATIONS': 3000,
+    'TOLERANCE': 1e-6,
+    'CFL_RELAXATION': 0.1,
+    'U_RELAXATION_FACTOR': 1.0,
+    'NUT_RELAXATION_FACTOR': 1.0
 }
 
 # Specify where results are saved
